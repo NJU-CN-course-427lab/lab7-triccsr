@@ -1,19 +1,29 @@
 #ifndef SPONGE_LIBSPONGE_STREAM_REASSEMBLER_HH
 #define SPONGE_LIBSPONGE_STREAM_REASSEMBLER_HH
 
+
 #include "byte_stream.hh"
 
 #include <cstdint>
 #include <string>
+#include <set>
 
 //! \brief A class that assembles a series of excerpts from a byte stream (possibly out of order,
 //! possibly overlapping) into an in-order byte stream.
 class StreamReassembler {
   private:
     // Your code here -- add private members as necessary.
+    
 
     ByteStream _output;  //!< The reassembled in-order byte stream
     size_t _capacity;    //!< The maximum number of bytes
+
+    size_t _unassembledBytes; 
+    uint64_t _firstUnknownIndex;
+    bool _eofReceived;
+    uint64_t _eofIndex;
+
+    std::deque<std::pair<char,bool> > _unassembledByteQueue;
 
   public:
     //! \brief Construct a `StreamReassembler` that will store up to `capacity` bytes.
@@ -46,6 +56,12 @@ class StreamReassembler {
     //! \brief Is the internal state empty (other than the output stream)?
     //! \returns `true` if no substrings are waiting to be assembled
     bool empty() const;
+
+    uint64_t first_unknown_index()const;
+
+    size_t window_size()const;
+
+    bool reassembler_reaches_eof()const;
 };
 
 #endif  // SPONGE_LIBSPONGE_STREAM_REASSEMBLER_HH

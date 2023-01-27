@@ -5,8 +5,9 @@
 #include "tcp_over_ip.hh"
 #include "tun.hh"
 
-#include <optional>
-#include <queue>
+#include <bits/stdc++.h>
+using namespace std;
+
 
 //! \brief A "network interface" that connects IP (the internet layer, or network layer)
 //! with Ethernet (the network access layer, or link layer).
@@ -31,6 +32,10 @@
 //! and learns or replies as necessary.
 class NetworkInterface {
   private:
+
+    const int QUERY_TIME=5000;
+
+    const int CACHE_TIME=30000;
     //! Ethernet (known as hardware, network-access-layer, or link-layer) address of the interface
     EthernetAddress _ethernet_address;
 
@@ -38,7 +43,24 @@ class NetworkInterface {
     Address _ip_address;
 
     //! outbound queue of Ethernet frames that the NetworkInterface wants sent
+
     std::queue<EthernetFrame> _frames_out{};
+
+    std::map<uint32_t,EthernetAddress> _aRPCacheMap{};
+
+    std::queue<pair<uint32_t,uint64_t> > _aRPDeleteQueue{};
+
+    std::set<uint32_t> _ipQuerySet{};
+
+    std::queue<pair<uint32_t,uint64_t> > _ipQueryDeleteQueue{};
+
+    std::map<uint32_t,vector<EthernetFrame> > _ipToBeSent{};
+    
+    uint64_t _msTime{0};
+
+    void get_EthernetFrame(const InternetDatagram &dgram, const EthernetAddress &dst, EthernetFrame &frame);
+
+    void new_arp_map(uint32_t ip,const EthernetAddress &ethernetAddress);
 
   public:
     //! \brief Construct a network interface with given Ethernet (network-access-layer) and IP (internet-layer) addresses

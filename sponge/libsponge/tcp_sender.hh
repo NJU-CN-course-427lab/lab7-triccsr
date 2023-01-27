@@ -8,6 +8,8 @@
 
 #include <functional>
 #include <queue>
+#include <set>
+#include <iostream>
 
 //! \brief The "sender" part of a TCP implementation.
 
@@ -31,6 +33,53 @@ class TCPSender {
 
     //! the (absolute) sequence number for the next byte to be sent
     uint64_t _next_seqno{0};
+
+    uint64_t _latest_ackno{0};
+
+    uint64_t _currentTime{0};
+
+    uint64_t _timerStartTime{0};
+
+    bool _timerRunning{false};
+
+    unsigned int _consecutiveRetransmissions{0};
+    
+    uint64_t _receiverWindowRightBound{0};
+
+    bool _announceWindow0{0};
+
+    bool _give0AChance{0};
+
+    uint64_t _outstandingSize{0};
+
+    std::queue<TCPSegment> _outstandingSegments{};
+
+    bool _sendFinished{0};
+
+    size_t get_window_size(){
+      return (_receiverWindowRightBound>=next_seqno_absolute())?(_receiverWindowRightBound-next_seqno_absolute()):0;
+    }
+
+
+    
+    void start_timer(){
+      //std::cerr<<"timer start"<<_currentTime<<std::endl;
+      _timerStartTime=_currentTime;
+      _timerRunning=true;
+    }
+    void end_timer(){
+      //std::cerr<<"timer end"<<_currentTime<<std::endl;
+      _timerRunning=false;
+      _consecutiveRetransmissions=0;
+    }
+    void reset_timer(){
+      //std::cerr<<"timer reset"<<_currentTime<<std::endl;
+      _consecutiveRetransmissions=0;
+    }
+    bool time_up(){
+      return (_timerRunning && _currentTime-_timerStartTime >= _initial_retransmission_timeout*(1ul<<_consecutiveRetransmissions))?1:0;
+    }
+
 
   public:
     //! Initialize a TCPSender
